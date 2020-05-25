@@ -33,6 +33,7 @@ void callbackOnDeviceMatch(void *context, IOReturn result, void *sender, IOHIDDe
 
   printf("We got a device from manufacturer: %s\n", vendorName);
   free(vendorName);
+  CFRelease(vendorNameRef);
 
   uint8_t reportId = 0x0;
   uint8_t reportData[36];
