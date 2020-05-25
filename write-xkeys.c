@@ -104,4 +104,7 @@ int main(int argc, char **argv) {
   IOHIDManagerOpen(hidManager, kIOHIDOptionsTypeNone);
 
   CFRunLoopRun();
+
+  CFRelease(keypad);
+  CFRelease(hidManager);
 }
