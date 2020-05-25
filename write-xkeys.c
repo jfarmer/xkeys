@@ -40,6 +40,7 @@ void callbackOnDeviceMatch(void *context, IOReturn result, void *sender, IOHIDDe
   IOReturn results;
 
   memset(reportData, 0, sizeof(reportData));
+
   reportData[0] = 0xB5;
   reportData[1] = 0x00;
   reportData[2] = 0x00;
@@ -52,7 +53,6 @@ void callbackOnDeviceMatch(void *context, IOReturn result, void *sender, IOHIDDe
   } else {
     printf("Failed to send report. Return value: %llu\n", (uint64_t)results);
   }
-
 }
 
 CFMutableDictionaryRef createHIDMatchingDict(uint32_t vid, uint32_t pid, uint32_t usagePage, uint32_t usage) {
