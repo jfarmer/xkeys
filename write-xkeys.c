@@ -104,10 +104,33 @@ _dict_cleanup:
     return NULL;
 }
 
+void printUsage(char *programName) {
+    fprintf(stderr, "Usage:\n");
+    fprintf(stderr, "    %s <Byte1> <Byte2> <Byte3> ... <ByteN>\n", programName);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "Example:\n");
+    fprintf(stderr, "    %s 0xB5 0x00 0x01\n", programName);
+}
+
 int main(int argc, char** argv)
 {
     IOHIDManagerRef hidManager;
     CFMutableDictionaryRef keypad;
+    int numBytes = argc - 1;
+
+    if (numBytes == 0) {
+        fprintf(stderr, "Error: You must specify at least one byte to send.\n");
+        printUsage(argv[0]);
+
+        exit(EXIT_FAILURE);
+    }
+
+    if (numBytes > Xkeys_XK16_REPORT_LENGTH) {
+        fprintf(stderr, "Error: Cannot send more than %d bytes (received %d)\n", Xkeys_XK16_REPORT_LENGTH, numBytes);
+        printUsage(argv[0]);
+
+        exit(EXIT_FAILURE);
+    }
 
     hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
     keypad = createHIDMatchingDict(Xkeys_XK16_VendorID,
