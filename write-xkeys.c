@@ -48,6 +48,7 @@ void callbackOnDeviceMatch(void *context, IOReturn result, void *sender, IOHIDDe
 
   if (results == kIOReturnSuccess) {
     printf("Successfully sent report.\n");
+    CFRunLoopStop(CFRunLoopGetCurrent());
   } else {
     printf("Failed to send report. Return value: %llu\n", (uint64_t)results);
   }
