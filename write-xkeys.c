@@ -1,5 +1,6 @@
 #include <IOKit/hid/IOHIDManager.h>
 #include <IOKit/hid/IOHIDValue.h>
+#include <errno.h>
 #include <stdio.h>
 
 #include "Xkeys.h"
@@ -112,7 +113,7 @@ int main(int argc, char** argv)
 
     int numBytes = argc - 1;
 
-    if (numBytes == 0) {
+    if (numBytes < 1) {
         fprintf(stderr, "Error: You must specify at least one byte to send.\n");
         printUsage(argv[0]);
 
@@ -135,13 +136,37 @@ int main(int argc, char** argv)
 
     memset(reportData, 0, Xkeys_XK16_REPORT_LENGTH);
 
-    for (int i = 0; i < numBytes; i++) {
-        /* The third argument to strtoul is the radix/base. A value of 0 tells
-           strtoul to derive the radix from the format of the provided string.
+    char* endptr = NULL;
 
-           That way we each byte can be given in hex or dec, e.g., 0xB5 or 181.
-        */
-        reportData[i] = (uint8_t)strtoul(argv[i + 1], NULL, 0);
+    for (int i = 0; i < numBytes; i++) {
+        // The third argument to strtoul is the radix/base. A value of 0 tells
+        // strtoul to derive the radix from the format of the provided string.
+        //
+        // That way we each byte can be given in hex or dec, e.g., 0xB5 or 181.
+
+        errno = 0;
+        unsigned long byte = strtoul(argv[i + 1], &endptr, 0);
+
+        // strtoul will parse what it can, so, e.g., `0xAPPLES` is parse as 0xA
+        // with endptr pointing to the start of the unparseable part. If we
+        // parsed everything then *endptr will be NULL.
+        if (errno != 0 || *endptr != 0) {
+            fprintf(stderr, "Error: Byte #%d is invalid. Received: '%s'\n", i + 1, argv[i + 1]);
+            printUsage(argv[0]);
+
+            free(reportData);
+            exit(EXIT_FAILURE);
+        }
+
+        if (byte > UINT8_MAX) {
+            fprintf(stderr, "Error: Byte #%d is larger than 8 bits. Received: %lu (0x%lX), max: %d (0x%X)\n", i + 1, byte, byte, UINT8_MAX, UINT8_MAX);
+            printUsage(argv[0]);
+
+            free(reportData);
+            exit(EXIT_FAILURE);
+        }
+
+        reportData[i] = (uint8_t)byte;
     }
 
     hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
