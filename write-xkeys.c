@@ -135,6 +135,11 @@ int main(int argc, char** argv)
     memset(reportData, 0, Xkeys_XK16_REPORT_LENGTH);
 
     for (int i = 0; i < numBytes; i++) {
+        /* The third argument to strtoul is the radix/base. A value of 0 tells
+           strtoul to derive the radix from the format of the provided string.
+
+           That way we each byte can be given in hex or dec, e.g., 0xB5 or 181.
+        */
         reportData[i] = (uint8_t)strtoul(argv[i + 1], NULL, 0);
     }
 
