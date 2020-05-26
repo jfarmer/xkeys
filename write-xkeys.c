@@ -115,16 +115,12 @@ int main(int argc, char** argv)
 
     if (numBytes < 1) {
         fprintf(stderr, "Error: You must specify at least one byte to send.\n");
-        printUsage(argv[0]);
-
-        exit(EXIT_FAILURE);
+        goto _exit_error;
     }
 
     if (numBytes > Xkeys_XK16_REPORT_LENGTH) {
         fprintf(stderr, "Error: Cannot send more than %d bytes (received %d)\n", Xkeys_XK16_REPORT_LENGTH, numBytes);
-        printUsage(argv[0]);
-
-        exit(EXIT_FAILURE);
+        goto _exit_error;
     }
 
     reportData = (uint8_t*)malloc(Xkeys_XK16_REPORT_LENGTH);
@@ -152,28 +148,34 @@ int main(int argc, char** argv)
         // parsed everything then *endptr will be NULL.
         if (errno != 0 || *endptr != 0) {
             fprintf(stderr, "Error: Byte #%d is invalid. Received: '%s'\n", i + 1, argv[i + 1]);
-            printUsage(argv[0]);
 
-            free(reportData);
-            exit(EXIT_FAILURE);
+            goto _exit_error;
         }
 
         if (byte > UINT8_MAX) {
             fprintf(stderr, "Error: Byte #%d is larger than 8 bits. Received: %lu (0x%lX), max: %d (0x%X)\n", i + 1, byte, byte, UINT8_MAX, UINT8_MAX);
-            printUsage(argv[0]);
-
-            free(reportData);
-            exit(EXIT_FAILURE);
+            goto _exit_error;
         }
 
         reportData[i] = (uint8_t)byte;
     }
 
     hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
+
+    if (!hidManager) {
+        fprintf(stderr, "Error: Cannot create HID Manager.\n");
+        goto _exit_error;
+    }
+
     keypad = createHIDMatchingDict(Xkeys_XK16_VendorID,
         Xkeys_XK16_ProductID,
         Xkeys_XK16_UsagePage,
         Xkeys_XK16_Usage);
+
+    if (!keypad) {
+        fprintf(stderr, "Error: Cannot create device matching dictionary.\n");
+        goto _exit_error;
+    }
 
     IOHIDManagerSetDeviceMatching(hidManager, keypad);
     IOHIDManagerRegisterDeviceMatchingCallback(hidManager, callbackOnDeviceMatch, reportData);
@@ -187,4 +189,21 @@ int main(int argc, char** argv)
     free(reportData);
     CFRelease(keypad);
     CFRelease(hidManager);
+
+    return EXIT_SUCCESS;
+
+_exit_error:
+    printUsage(argv[0]);
+
+    free(reportData);
+
+    if (keypad) {
+        CFRelease(keypad);
+    }
+
+    if (hidManager) {
+        CFRelease(hidManager);
+    }
+
+    return EXIT_FAILURE;
 }
