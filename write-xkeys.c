@@ -35,7 +35,7 @@ void callbackOnDeviceMatch(void* context, IOReturn result, void* sender, IOHIDDe
     free(vendorName);
     CFRelease(vendorNameRef);
 
-    uint8_t *reportData = context;
+    uint8_t* reportData = context;
     uint8_t reportId = 0x0;
     IOReturn results;
 
@@ -95,7 +95,8 @@ _dict_cleanup:
     return NULL;
 }
 
-void printUsage(char *programName) {
+void printUsage(char* programName)
+{
     fprintf(stderr, "Usage:\n");
     fprintf(stderr, "    %s <Byte1> <Byte2> <Byte3> ... <ByteN>\n", programName);
     fprintf(stderr, "\n");
@@ -107,7 +108,7 @@ int main(int argc, char** argv)
 {
     IOHIDManagerRef hidManager = NULL;
     CFMutableDictionaryRef keypad = NULL;
-    uint8_t *reportData = NULL;
+    uint8_t* reportData = NULL;
 
     int numBytes = argc - 1;
 
@@ -125,7 +126,7 @@ int main(int argc, char** argv)
         exit(EXIT_FAILURE);
     }
 
-    reportData = (uint8_t *)malloc(Xkeys_XK16_REPORT_LENGTH);
+    reportData = (uint8_t*)malloc(Xkeys_XK16_REPORT_LENGTH);
 
     if (!reportData) {
         fprintf(stderr, "Unable to allocate memory.\n");
