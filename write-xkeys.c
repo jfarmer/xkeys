@@ -91,6 +91,7 @@ CFMutableDictionaryRef createHIDMatchingDict(uint32_t vid, uint32_t pid, uint32_
     CFRelease(usageNumberRef);
 
     return dict;
+
 _dict_cleanup:
     CFRelease(dict);
     return NULL;
