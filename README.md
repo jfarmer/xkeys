@@ -49,6 +49,14 @@ You could then turn it off with:
 bin/write-keys 181 2 0
 ```
 
+You can also specify the bytes in hexadecimal. To turn on the 3rd LED, you could run:
+
+```console
+bin/write-keys 0xB5 0x02 0x01
+```
+
+This is because `0xB5` is `181` in decimal.
+
 [url-iokit]: https://developer.apple.com/documentation/iokit
 [url-xkeys-xk-16]: https://xkeys.com/xk16.html
 [url-controllermate]: https://www.orderedbytes.com/controllermate/
