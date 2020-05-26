@@ -19,8 +19,6 @@ char* CStringCopyFromCFString(CFStringRef stringRef)
 
 void callbackOnDeviceMatch(void* context, IOReturn result, void* sender, IOHIDDeviceRef device)
 {
-    printf("----\n");
-    printf("Matching device.\n");
 
     CFStringRef vendorNameRef;
     char* vendorName;
@@ -37,18 +35,11 @@ void callbackOnDeviceMatch(void* context, IOReturn result, void* sender, IOHIDDe
     free(vendorName);
     CFRelease(vendorNameRef);
 
+    uint8_t *reportData = context;
     uint8_t reportId = 0x0;
-    uint8_t reportData[36];
-    size_t reportLength = 35;
     IOReturn results;
 
-    memset(reportData, 0, sizeof(reportData));
-
-    reportData[0] = 0xB5;
-    reportData[1] = 0x00;
-    reportData[2] = 0x00;
-
-    results = IOHIDDeviceSetReport(device, kIOHIDReportTypeOutput, reportId, reportData, reportLength);
+    results = IOHIDDeviceSetReport(device, kIOHIDReportTypeOutput, reportId, reportData, Xkeys_XK16_REPORT_LENGTH - 1);
 
     if (results == kIOReturnSuccess) {
         printf("Successfully sent report.\n");
@@ -114,8 +105,10 @@ void printUsage(char *programName) {
 
 int main(int argc, char** argv)
 {
-    IOHIDManagerRef hidManager;
-    CFMutableDictionaryRef keypad;
+    IOHIDManagerRef hidManager = NULL;
+    CFMutableDictionaryRef keypad = NULL;
+    uint8_t *reportData = NULL;
+
     int numBytes = argc - 1;
 
     if (numBytes == 0) {
@@ -132,6 +125,19 @@ int main(int argc, char** argv)
         exit(EXIT_FAILURE);
     }
 
+    reportData = (uint8_t *)malloc(Xkeys_XK16_REPORT_LENGTH);
+
+    if (!reportData) {
+        fprintf(stderr, "Unable to allocate memory.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    memset(reportData, 0, Xkeys_XK16_REPORT_LENGTH);
+
+    for (int i = 0; i < numBytes; i++) {
+        reportData[i] = (uint8_t)strtoul(argv[i + 1], NULL, 0);
+    }
+
     hidManager = IOHIDManagerCreate(kCFAllocatorDefault, kIOHIDOptionsTypeNone);
     keypad = createHIDMatchingDict(Xkeys_XK16_VendorID,
         Xkeys_XK16_ProductID,
@@ -139,7 +145,7 @@ int main(int argc, char** argv)
         Xkeys_XK16_Usage);
 
     IOHIDManagerSetDeviceMatching(hidManager, keypad);
-    IOHIDManagerRegisterDeviceMatchingCallback(hidManager, callbackOnDeviceMatch, NULL);
+    IOHIDManagerRegisterDeviceMatchingCallback(hidManager, callbackOnDeviceMatch, reportData);
 
     IOHIDManagerScheduleWithRunLoop(hidManager, CFRunLoopGetMain(), kCFRunLoopDefaultMode);
 
@@ -147,6 +153,7 @@ int main(int argc, char** argv)
 
     CFRunLoopRun();
 
+    free(reportData);
     CFRelease(keypad);
     CFRelease(hidManager);
 }
