@@ -2,6 +2,8 @@
 bin/*
 !bin/.keep
 
+sandbox/
+
 ### C ###
 # Prerequisites
 *.d
